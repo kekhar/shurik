@@ -6,13 +6,13 @@
 ### 1.2 Установка зависимостей
 
 1. Клонируйте репозиторий:  
-   	```bash
-   npm install
+   ```bash
+   git clone https://github.com/kekhar/shurik.git
    ```
 
 2. Установите пакеты:
 	```bash
-   git clone <URL_репозитория>
+   npm install
    ```
 
 ## 2. Как запустить?
