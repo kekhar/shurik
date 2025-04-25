@@ -92,7 +92,7 @@ export function RegistrationForm() {
           {errors.lastName && <div className="error">{errors.lastName}</div>}
         </div>
         <div className="field-container">
-          <label>Отчество</label>
+          <label>Отчество (если нет Отчества, то пропустите)</label>
           <input
             className="input"
             value={patronymic}
