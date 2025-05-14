@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { register } from '../services/authService';
 
 function validateEmail(email) {
   return /\S+@\S+\.\S+/.test(email);
 }
-
 function validatePhone(phone) {
   return /^\d{10,15}$/.test(phone);
 }
-
-function validatePassword(password) {
-  // минимум 6 символов
-  return password.length >= 6;
+function validatePassword(pw) {
+  return pw.length >= 6;
 }
 
 export function RegistrationForm() {
@@ -26,39 +24,30 @@ export function RegistrationForm() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    const validationErrors = {};
-    if (!firstName.trim()) validationErrors.firstName = 'Введите имя';
-    if (!lastName.trim()) validationErrors.lastName = 'Введите фамилию';
-    if (!validatePhone(phone)) validationErrors.phone = 'Неверный номер';
-    if (!validateEmail(email)) validationErrors.email = 'Неверный email';
-    if (!validatePassword(password))
-      validationErrors.password = 'Пароль минимум 6 символов';
+    const v = {};
+    if (!firstName.trim()) v.firstName = 'Введите имя';
+    if (!lastName.trim()) v.lastName = 'Введите фамилию';
+    if (!validatePhone(phone)) v.phone = 'Неверный номер';
+    if (!validateEmail(email)) v.email = 'Неверный email';
+    if (!validatePassword(password)) v.password = 'Пароль минимум 6 символов';
 
-    if (Object.keys(validationErrors).length) {
-      setErrors(validationErrors);
+    if (Object.keys(v).length) {
+      setErrors(v);
       return;
     }
 
     try {
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          patronymic,
-          phone,
-          email,
-          password,
-        }),
+      await register({
+        firstName,
+        lastName,
+        patronymic,
+        phone,
+        email,
+        password,
       });
-      if (response.ok) navigate('/login');
-      else {
-        const data = await response.json();
-        setErrors({ server: data.message || 'Ошибка регистрации' });
-      }
-    } catch {
-      setErrors({ server: 'Сервер недоступен' });
+      navigate('/login');
+    } catch (err) {
+      setErrors({ server: err.message });
     }
   };
 
@@ -79,6 +68,7 @@ export function RegistrationForm() {
           />
           {errors.firstName && <div className="error">{errors.firstName}</div>}
         </div>
+
         <div className="field-container">
           <label>Фамилия</label>
           <input
@@ -91,14 +81,16 @@ export function RegistrationForm() {
           />
           {errors.lastName && <div className="error">{errors.lastName}</div>}
         </div>
+
         <div className="field-container">
-          <label>Отчество (если нет Отчества, то пропустите)</label>
+          <label>Отчество (необязательно)</label>
           <input
             className="input"
             value={patronymic}
             onChange={(e) => setPatronymic(e.target.value)}
           />
         </div>
+
         <div className="field-container">
           <label>Номер телефона</label>
           <input
@@ -112,6 +104,7 @@ export function RegistrationForm() {
           />
           {errors.phone && <div className="error">{errors.phone}</div>}
         </div>
+
         <div className="field-container">
           <label>Email</label>
           <input
@@ -125,6 +118,7 @@ export function RegistrationForm() {
           />
           {errors.email && <div className="error">{errors.email}</div>}
         </div>
+
         <div className="field-container">
           <label>Пароль</label>
           <input
@@ -138,6 +132,7 @@ export function RegistrationForm() {
           />
           {errors.password && <div className="error">{errors.password}</div>}
         </div>
+
         <button type="submit" className="btn">
           Зарегистрироваться
         </button>

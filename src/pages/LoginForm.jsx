@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { login } from '../services/authService';
 
 function validateEmail(email) {
   return /\S+@\S+\.\S+/.test(email);
@@ -13,32 +14,24 @@ export function LoginForm() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const validationErrors = {};
-    if (!validateEmail(email)) validationErrors.email = 'Неверный email';
-    if (!password) validationErrors.password = 'Введите пароль';
-    if (Object.keys(validationErrors).length) {
-      setErrors(validationErrors);
+    const v = {};
+    if (!validateEmail(email)) v.email = 'Неверный email';
+    if (!password) v.password = 'Введите пароль';
+    if (Object.keys(v).length) {
+      setErrors(v);
       return;
     }
 
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      if (response.ok) navigate('/');
-      else {
-        const data = await response.json();
-        setErrors({ server: data.message || 'Ошибка входа' });
-      }
-    } catch {
-      setErrors({ server: 'Сервер недоступен' });
+      await login({ email, password });
+      navigate('/');
+    } catch (err) {
+      setErrors({ server: err.message });
     }
   };
 
   return (
-    <div className="form-wrapper" style={{ maxWidth: '320px' }}>
+    <div className="form-wrapper">
       <h2>Авторизация</h2>
       {errors.server && <div className="error">{errors.server}</div>}
       <form onSubmit={handleLogin}>
@@ -55,6 +48,7 @@ export function LoginForm() {
           />
           {errors.email && <div className="error">{errors.email}</div>}
         </div>
+
         <div className="field-container">
           <label>Пароль</label>
           <input
@@ -68,6 +62,7 @@ export function LoginForm() {
           />
           {errors.password && <div className="error">{errors.password}</div>}
         </div>
+
         <button type="submit" className="btn">
           Войти
         </button>
