@@ -26,12 +26,12 @@
 
 ## 3. Как это работает?
 
-### 1.1 Переменная окружения
+### 1. Переменная окружения
 
 - import.meta.env.VITE_API_URL
   используется в src/services/authService.js и src/services/apiClient.js как базовый URL для всех запросов к API.
 
-### 1.2. Где храняться клиентские запросы?
+### 2. Где храняться клиентские запросы?
 
 #### - в src/services/authService.js
 
