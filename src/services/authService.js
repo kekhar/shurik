@@ -1,82 +1,96 @@
-const API_URL = import.meta.env.VITE_API_URL; // Берет из .env, могу убрать
 const ACCESS_KEY = 'access_token';
 const REFRESH_KEY = 'refresh_token';
 
+// —————— Работа с токенами ——————
 export function getAccessToken() {
   return localStorage.getItem(ACCESS_KEY);
 }
-
 export function getRefreshToken() {
   return localStorage.getItem(REFRESH_KEY);
 }
-
 export function setTokens({ access, refresh }) {
   localStorage.setItem(ACCESS_KEY, access);
   localStorage.setItem(REFRESH_KEY, refresh);
 }
-
 export function clearTokens() {
   localStorage.removeItem(ACCESS_KEY);
   localStorage.removeItem(REFRESH_KEY);
 }
 
-// Регистрация нового пользователя
+// —————— Регистрация — POST /api/v1/auth/register ——————
 export async function register(data) {
-  const res = await fetch(`${API_URL}/api/v1/users/`, {
+  console.log('[authService] register payload:', data);
+  const res = await fetch('/api/v1/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
+  const body = await res.json();
+  console.log('[authService] register response status:', res.status);
+  console.log('[authService] register response body:', body);
+
   if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.detail || err.message || 'Ошибка регистрации');
+    throw new Error(body.detail || body.message || 'Ошибка регистрации');
   }
-  return res.json();
+  if (body.access_token && body.refresh_token) {
+    setTokens({ access: body.access_token, refresh: body.refresh_token });
+  }
+  return body;
 }
 
-// Вход — сохраняем access + refresh
+// —————— Вход — POST /api/v1/auth/login ——————
 export async function login(credentials) {
-  const res = await fetch(`${API_URL}/api/v1/auth/login`, {
+  const res = await fetch('/api/v1/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(credentials),
   });
+  const body = await res.json();
+
   if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.detail || err.message || 'Ошибка входа');
+    throw new Error(body.detail || body.message || 'Ошибка входа');
   }
-  const data = await res.json();
-  setTokens({ access: data.access, refresh: data.refresh });
-  return data;
+  setTokens({ access: body.access_token, refresh: body.refresh_token });
+  return body;
 }
 
-// Обновление access-токена по refresh
+// —————— Рефреш — POST /api/v1/auth/refresh ——————
 export async function refreshToken() {
   const refresh = getRefreshToken();
   if (!refresh) throw new Error('Нет refresh-токена');
-  const res = await fetch(`${API_URL}/api/v1/auth/refresh`, {
+
+  const res = await fetch('/api/v1/auth/refresh', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh }),
+    body: JSON.stringify({ refresh_token: refresh }),
   });
+  const body = await res.json();
+
   if (!res.ok) {
     clearTokens();
-    throw new Error('Не удалось обновить сессию');
+    throw new Error(
+      body.detail || body.message || 'Не удалось обновить сессию'
+    );
   }
-  const data = await res.json();
-  setTokens({ access: data.access, refresh: data.refresh });
-  return data.access;
+
+  setTokens({ access: body.access_token, refresh: body.refresh_token });
+  return body.access_token;
 }
 
-// Выход (опционально)
+// —————— Выход — DELETE /api/v1/auth/logout ——————
 export async function logout() {
-  const token = getAccessToken();
-  await fetch(`${API_URL}/api/v1/auth/logout`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  clearTokens();
+  try {
+    const token = getAccessToken();
+    await fetch('/api/v1/auth/logout', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  } catch (e) {
+    console.warn('Ошибка при logout:', e);
+  } finally {
+    clearTokens();
+  }
 }
