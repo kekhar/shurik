@@ -17,24 +17,56 @@ export function clearTokens() {
   localStorage.removeItem(REFRESH_KEY);
 }
 
-// —————— Регистрация — POST /api/v1/auth/register ——————
-export async function register(data) {
-  console.log('[authService] register payload:', data);
-  const res = await fetch('/api/v1/auth/register', {
+// —————— Создать пользователя — POST /api/v1/users/ ——————
+export async function createUser(data) {
+  const res = await fetch('/api/v1/users/', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
   const body = await res.json();
-  console.log('[authService] register response status:', res.status);
-  console.log('[authService] register response body:', body);
 
   if (!res.ok) {
-    throw new Error(body.detail || body.message || 'Ошибка регистрации');
+    // Обработка ошибок валидации
+    if (
+      body.error_code === 'ValidationException' &&
+      body.additional_info?.errors
+    ) {
+      const fieldErrors = {};
+      body.additional_info.errors.forEach((err) => {
+        let key;
+        switch (err.field) {
+          case 'name':
+            key = 'firstName';
+            break;
+          case 'surname':
+            key = 'lastName';
+            break;
+          case 'phone_number':
+            key = 'phone';
+            break;
+          case 'email':
+            key = 'email';
+            break;
+          case 'password':
+            key = 'password';
+            break;
+          default:
+            key = err.field;
+        }
+        fieldErrors[key] = err.message;
+      });
+      throw { validation: fieldErrors };
+    }
+    throw new Error(
+      body.detail || body.message || 'Ошибка создания пользователя'
+    );
   }
+
   if (body.access_token && body.refresh_token) {
     setTokens({ access: body.access_token, refresh: body.refresh_token });
   }
+
   return body;
 }
 
@@ -50,7 +82,9 @@ export async function login(credentials) {
   if (!res.ok) {
     throw new Error(body.detail || body.message || 'Ошибка входа');
   }
+
   setTokens({ access: body.access_token, refresh: body.refresh_token });
+  
   return body;
 }
 

@@ -37,28 +37,27 @@
 
 #### - в src/services/authService.js
 
-- register(data)
-  Отправляет POST ${VITE_API_URL}/api/v1/users/ с телом { firstName, lastName, patronymic, phone, email, password }.
+- createUser(data)
+  Отправляет POST /api/v1/users/ с телом { name, surname, patronymic, phone, email, password }.
   При ошибке выбрасывает Error с сообщением из ответа.
 
 - login(credentials)
-  Отправляет POST ${VITE_API_URL}/api/v1/auth/login с { email, password }.
+  Отправляет POST /api/v1/auth/login с { email, password }.
   Ожидает ответ { access_token, refresh_token }, сохраняет их в localStorage и возвращает данные.
 
 - refreshToken()
   Читает refresh_token из localStorage,
-  отправляет POST ${VITE_API_URL}/api/v1/auth/refresh с { refresh_token }.
+  отправляет POST /api/v1/auth/refresh с { refresh_token }.
   Если OK — обновляет access_token и refresh_token в localStorage и возвращает новый access_token.
   Если не OK — очищает оба токена и выбрасывает Error.
 
 - logout()
-  Отправляет DELETE ${VITE_API_URL}/api/v1/auth/logout с заголовком Authorization: Bearer <access_token>,
+  Отправляет DELETE /api/v1/auth/logout с заголовком Authorization: Bearer <access_token>,
   затем очищает токены из localStorage.
 
 #### - src/services/apiClient.js
 
 - fetchWithAuth(path, init)
-  Формирует URL: если path начинается с http — использует его напрямую, иначе префиксует VITE_API_URL.
   Добавляет заголовок Authorization: Bearer <access_token> (если есть).
   При получении 401 Unauthorized автоматически вызывает refreshToken() и повторяет запрос с новым access_token.
   Если рефреш не удался — очищает токены и перенаправляет пользователя на /login.

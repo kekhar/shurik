@@ -1,28 +1,22 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { register } from '../services/authService';
+import { createUser } from '../services/authService';
 import { Eye, EyeOff } from 'lucide-react';
 
 function validateEmail(email) {
   return /\S+@\S+\.\S+/.test(email);
 }
 
-// проверяем, что в строке 10–11 цифр
 function validatePhone(value) {
   const digits = value.replace(/\D/g, '');
   return digits.length === 10 || digits.length === 11;
 }
 
-// для payload оставляем «+7xxxx…» или «+xxxx…»
 function normalizePhone(value) {
   const digits = value.replace(/\D/g, '');
-  if (digits.length === 10) {
-    return '+7' + digits;
-  }
-  return '+' + digits;
+  return digits.length === 10 ? '+7' + digits : '+' + digits;
 }
 
-// простой формат ввода «+7 (xxx) xxx-xx-xx»
 function formatPhone(value) {
   let d = value.replace(/\D/g, '');
   if (d.startsWith('8')) d = '7' + d.slice(1);
@@ -35,7 +29,6 @@ function formatPhone(value) {
   return r;
 }
 
-// теперь пароль минимум 8 символов
 function validatePassword(pw) {
   return pw.length >= 8;
 }
@@ -53,7 +46,6 @@ export function RegistrationForm() {
   const navigate = useNavigate();
 
   const toggleShow = () => setShowPassword((v) => !v);
-
   const onPhoneChange = (e) => {
     setPhone(formatPhone(e.target.value));
     setErrors({ ...errors, phone: '' });
@@ -78,17 +70,21 @@ export function RegistrationForm() {
     const payload = {
       name: firstName,
       surname: lastName,
-      patronymic: patronymic,
+      patronymic,
       phone_number: normalizePhone(phone),
-      email: email,
-      password: password,
+      email,
+      password,
     };
 
     try {
-      await register(payload);
+      await createUser(payload);
       navigate('/login');
     } catch (err) {
-      setErrors({ server: err.message });
+      if (err.validation) {
+        setErrors(err.validation);
+      } else {
+        setErrors({ server: err.message || 'Серверная ошибка' });
+      }
     }
   };
 
