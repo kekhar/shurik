@@ -26,14 +26,14 @@
 
 ## 3. Как это работает?
 
-# 1.1 Переменная окружения
+### 1.1 Переменная окружения
 
 - import.meta.env.VITE_API_URL
   используется в src/services/authService.js и src/services/apiClient.js как базовый URL для всех запросов к API.
 
-# 1.2. Где храняться клиентские запросы?
+### 1.2. Где храняться клиентские запросы?
 
-# - в src/services/authService.js
+#### - в src/services/authService.js
 
 - register(data)
   Отправляет POST ${VITE_API_URL}/api/v1/users/ с телом { firstName, lastName, patronymic, phone, email, password }.
@@ -53,7 +53,7 @@
   Отправляет DELETE ${VITE_API_URL}/api/v1/auth/logout с заголовком Authorization: Bearer <access_token>,
   затем очищает токены из localStorage.
 
-# - src/services/apiClient.js
+#### - src/services/apiClient.js
 
 - fetchWithAuth(path, init)
   Формирует URL: если path начинается с http — использует его напрямую, иначе префиксует VITE_API_URL.
